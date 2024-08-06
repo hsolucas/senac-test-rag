@@ -1,0 +1,48 @@
+<div>
+
+    <textarea id="question" placeholder="What do you want?" cols="50" rows="5"></textarea>
+    <button id="send">Ask</button>
+
+</div>
+
+<div>
+    <p id="response"></p>
+</div>
+
+<script>
+
+document.getElementById('send').addEventListener('click', function() {
+    // Create a new XMLHttpRequest object
+    var xhr = new XMLHttpRequest();
+
+    // Configure it: GET-request for the URL / at localhost:8080
+    xhr.open('POST', 'http://localhost:8080/chat/ask/rag', true);
+
+    // Set up a function to handle the response data
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            var response;
+            if (xhr.status === 200) {
+                // Parse and handle the response if needed
+                var responseText = xhr.responseText;
+                var history = document.getElementById('response').innerHTML;
+                response = history + "<hr/>" + responseText;
+            } else {
+                response = 'Sorry...The status is ' + xhr.status;
+            }
+            document.getElementById('response').innerHTML = response;
+        }
+    };
+
+    // Create the data object to send
+    var data = {
+        question: document.getElementById('question').value
+    };
+
+    // Send the request with the data as a JSON string
+    xhr.send(JSON.stringify(data));
+
+});
+
+
+</script>
