@@ -11,7 +11,6 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
-import dev.langchain4j.service.Result;
 import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import jakarta.inject.Inject;
@@ -50,24 +49,35 @@ public class ChatResource {
     @Produces(MediaType.TEXT_PLAIN)
     public String askWithRag(String message) {
         
-        List<Document> documents = FileSystemDocumentLoader.loadDocuments("C:\\Users\\SO\\Desktop\\Apresentação tdc\\files");
+        try{
+            String ragFilesPath = "/opt/liferay/tests/rag-files";
+            List<Document> documents = FileSystemDocumentLoader.loadDocuments(ragFilesPath);
+            
+            InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
+            EmbeddingStoreIngestor.ingest(documents, embeddingStore);
 
-        InMemoryEmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
-        EmbeddingStoreIngestor.ingest(documents, embeddingStore);
+            OpenAiChatModel model = OpenAiChatModel.builder()
+            .apiKey("demo")
+            .modelName("gpt-4o-mini")
+            .temperature(0.3)
+            .logRequests(true)
+            .logResponses(true)
+            .build();
 
-        ChatService assistant = AiServices.builder(ChatService.class)
-        .chatLanguageModel(OpenAiChatModel.withApiKey("demo"))
-        .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-        .contentRetriever(EmbeddingStoreContentRetriever.from(embeddingStore))
-        .build();
+            ChatService assistant = AiServices.builder(ChatService.class)
+            .chatLanguageModel(model)
+            .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
+            .contentRetriever(EmbeddingStoreContentRetriever.from(embeddingStore))
+            .build();
+    
+            return assistant.askRag(message);
 
-        return assistant.askRag(message);
+        }catch(Exception ex){
+            ex.printStackTrace();
+            return "RAG unavailable : " + ex.getMessage();
+        }
 
     }
-
-
-
-
 
     @Inject
     ChatService chatService;

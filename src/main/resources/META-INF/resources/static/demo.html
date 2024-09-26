@@ -1,22 +1,48 @@
-<div>
+<style>
+    #form{
+        margin:10px;display:flex;
+    }
+    #form div{
+        display:grid;
+    }
+    .btn{
+        margin:10px;
+    }
+</style>
 
-    <textarea id="question" placeholder="What do you want?" cols="50" rows="5"></textarea>
-    <button id="send">Ask</button>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
+
+<div id="form">
+    <div>
+        <textarea id="question" placeholder="O que você quer?" cols="50" rows="5"></textarea>
+    </div>
+    <div>
+        <button id="gpt" class="btn btn-danger">Pergunte ao chat GPT</button>
+        <button id="rag" class="btn btn-primary">Pergunte usando RAG</button>
+    </div>
 </div>
 
 <div>
+    <p id="status"></p>
     <p id="response"></p>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+
 <script>
 
-document.getElementById('send').addEventListener('click', function() {
+function sendQuestion(url) {
+
+    document.getElementById('status').innerHTML = 'Aguardando uma resposta...';
+
     // Create a new XMLHttpRequest object
     var xhr = new XMLHttpRequest();
 
     // Configure it: GET-request for the URL / at localhost:8080
-    xhr.open('POST', 'http://localhost:8080/chat/ask/rag', true);
+    xhr.open('POST', url, true);
 
     // Set up a function to handle the response data
     xhr.onreadystatechange = function () {
@@ -26,10 +52,11 @@ document.getElementById('send').addEventListener('click', function() {
                 // Parse and handle the response if needed
                 var responseText = xhr.responseText;
                 var history = document.getElementById('response').innerHTML;
-                response = history + "<hr/>" + responseText;
+                response = new Date().toLocaleString() + "<br/>" + responseText + + "<hr/>" + history;
             } else {
-                response = 'Sorry...The status is ' + xhr.status;
+                response = 'Desculpe...O status da resposta foi ' + xhr.status;
             }
+            document.getElementById('status').innerHTML = '';
             document.getElementById('response').innerHTML = response;
         }
     };
@@ -42,6 +69,16 @@ document.getElementById('send').addEventListener('click', function() {
     // Send the request with the data as a JSON string
     xhr.send(JSON.stringify(data));
 
+}
+
+document.getElementById('gpt').addEventListener('click', function() {
+    const url = 'http://localhost:8080/chat/ask';
+    sendQuestion(url);
+});
+
+document.getElementById('rag').addEventListener('click', function() {
+    const url = 'http://localhost:8080/chat/ask/rag';
+    sendQuestion(url);
 });
 
 
